@@ -131,10 +131,19 @@ class TestTimeline(unittest.TestCase):
 
 class TestRTCifier(unittest.TestCase):
     def setUp(self):
+        self.patcher = unittest.mock.patch.object(
+            timeline.RTCifier,
+            "INIT_HISTORY",
+            new=1,
+        )
+        self.patcher.start()
         self.tl = timeline.Timeline(2**16, 1000)
         self.rtcifier = timeline.RTCifier(
             self.tl
         )
+
+    def tearDown(self):
+        self.patcher.stop()
 
     def test_align_maps_directly(self):
         dt0 = datetime.utcnow().replace(microsecond=0)
@@ -264,11 +273,11 @@ class TestRTCifier(unittest.TestCase):
         )
 
         self.rtcifier.align(
-            dt0 + timedelta(seconds=10),
+            dt0 + timedelta(seconds=120),
             3000,
         )
 
         self.assertEqual(
             self.rtcifier.map_to_rtc(3000),
-            dt0 + timedelta(seconds=10)
+            dt0 + timedelta(seconds=120)
         )
