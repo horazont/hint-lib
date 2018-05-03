@@ -56,7 +56,7 @@ class Timeline:
 
 
 class RTCifier:
-    MAX_HISTORY = 10000
+    MAX_HISTORY = 1500
     INIT_HISTORY = 2
     MAX_DIFFERENCE = timedelta(seconds=60)
 
