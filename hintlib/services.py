@@ -327,7 +327,7 @@ class StreamSubmitterService(SubmitterServiceMixin,
         super().__init__(client, **kwargs)
         # the front queue can be sized infinitely
         self._front_queue = asyncio.Queue()
-        self.__task = asyncio.ensure_future(self._compressor_task)
+        self.__task = asyncio.ensure_future(self._compressor_task())
         self.__task.add_done_callback(self._handle_compressor_task_done)
 
     def _handle_compressor_task_done(self, task):
@@ -337,7 +337,7 @@ class StreamSubmitterService(SubmitterServiceMixin,
         self.logger.error("compressor task (%r) exited prematurely, "
                           "trying to re-start it", task)
 
-        self.__task = asyncio.ensure_future(self._compressor_task)
+        self.__task = asyncio.ensure_future(self._compressor_task())
         self.__task.add_done_callback(self._handle_compressor_task_done)
 
     def submit_block(self, block):
