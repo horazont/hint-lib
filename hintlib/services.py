@@ -251,11 +251,14 @@ class SubmitterServiceMixin(metaclass=abc.ABCMeta):
             self._queue.put_nowait(item)
 
     async def _submit_single(self, dest, item):
+        self.logger.debug("composing IQ payload for %r", item)
+        payload = self._compose_iq_payload(item)
         iq = aioxmpp.IQ(
             type_=aioxmpp.IQType.SET,
             to=dest,
-            payload=self._compose_iq_payload(item)
+            payload=payload
         )
+        self.logger.debug("submitting %r", item)
         await self.client.send(iq)
 
     async def _impl(self, dest, cached_item=None):
@@ -380,6 +383,7 @@ class StreamSubmitterService(SubmitterServiceMixin,
                                   exc_info=True)
                 self._drop_item(item)
                 raise
+            self.logger.debug("compression produced item %r", processed_item)
             self._enqueue_dropping_old(processed_item)
 
     def _compose_iq_payload(self, item):
