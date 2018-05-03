@@ -12,7 +12,7 @@ class BotCore:
             aioxmpp.make_security_layer(
                 xmpp_config["password"]
             ),
-            base_logger=client_logger,
+            logger=client_logger,
         )
 
         self.__nested_cm = None
