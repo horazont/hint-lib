@@ -82,7 +82,7 @@ class SenderService(aioxmpp.service.Service):
     def _on_available(self, full_jid, stanza):
         if stanza.from_.bare() != self.peer_jid:
             return
-        self.logger.debug("locked to %s", full_jid)
+        self.logger.info("locked to %s", full_jid)
         self.__locked_to = full_jid
         self.__lock_event.set()
 
@@ -90,8 +90,8 @@ class SenderService(aioxmpp.service.Service):
     def _on_unavailable(self, full_jid, stanza):
         if stanza.from_ != self.__locked_to:
             return
-        self.logger.debug("locked-to JID %s is offline, trying to lock to "
-                          "another one", full_jid)
+        self.logger.info("locked-to JID %s is offline, trying to lock to "
+                         "another one", full_jid)
         self.__locked_to = None
         self.__lock_event.clear()
 
@@ -104,8 +104,8 @@ class SenderService(aioxmpp.service.Service):
         # pick a "random" one
         next_resource = next(iter(resources.keys()))
         full_jid = full_jid.replace(resource=next_resource)
-        self.logger.debug("locked to %s in response to unavailable presence",
-                          full_jid)
+        self.logger.info("locked to %s in response to unavailable presence",
+                         full_jid)
 
         self.__locked_to = full_jid
         self.__lock_event.set()
@@ -114,7 +114,7 @@ class SenderService(aioxmpp.service.Service):
     def _on_bare_unavailable(self, stanza):
         if stanza.from_.bare() != self.peer_jid:
             return
-        self.logger.debug("%s went offline, unlocking", stanza.from_.bare())
+        self.logger.info("%s went offline, unlocking", stanza.from_.bare())
         self.__locked_to = None
         self.__lock_event.clear()
 
@@ -246,7 +246,7 @@ class SubmitterServiceMixin(metaclass=abc.ABCMeta):
             self._queue.put_nowait(item)
         except asyncio.QueueFull:
             to_drop = self._queue.get_nowait(item)
-            self.logger.debug("queue full, dropping %r", to_drop)
+            self.logger.warning("queue full, dropping %r", to_drop)
             self._drop_item(to_drop)
             self._queue.put_nowait(item)
 
@@ -383,7 +383,6 @@ class StreamSubmitterService(SubmitterServiceMixin,
                                   exc_info=True)
                 self._drop_item(item)
                 raise
-            self.logger.debug("compression produced item %r", processed_item)
             self._enqueue_dropping_old(processed_item)
 
     def _compose_iq_payload(self, item):
