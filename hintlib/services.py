@@ -216,7 +216,7 @@ class SubmitterServiceMixin(metaclass=abc.ABCMeta):
     def queue_size(self, value):
         new_queue = asyncio.Queue(value)
         all_items = [self._queue.get_nowait()
-                     for i in range(self._queue.get_nowait())]
+                     for i in range(self._queue.qsize())]
 
         if value is not None and value < len(all_items):
             to_drop = all_items[:len(all_items)-value]
