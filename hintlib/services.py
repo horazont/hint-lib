@@ -370,7 +370,7 @@ class StreamSubmitterService(SubmitterServiceMixin,
         while True:
             item = await self._front_queue.get()
             try:
-                processed_item = loop.run_in_executor(
+                processed_item = await loop.run_in_executor(
                     None,
                     self._preprocess_item,
                     item,
