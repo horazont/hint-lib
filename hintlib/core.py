@@ -4,14 +4,15 @@ from .services import Buddies
 
 
 class BotCore:
-    def __init__(self, xmpp_config):
+    def __init__(self, xmpp_config, client_logger=None):
         super().__init__()
         self.__config = xmpp_config
         self.client = aioxmpp.Client(
             aioxmpp.JID.fromstr(xmpp_config["jid"]),
             aioxmpp.make_security_layer(
                 xmpp_config["password"]
-            )
+            ),
+            base_logger=client_logger,
         )
 
         self.__nested_cm = None
