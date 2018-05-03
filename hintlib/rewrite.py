@@ -246,6 +246,9 @@ class RewriteBatchValue(CalcRewriteRule):
             return sample_batch
 
         new_value = self._evaluate(locals_)
+        if new_value is None:
+            self.logger.debug("not rewriting %r value due to None result",
+                              self.subpart)
 
         new_samples = dict(samples)
         new_samples[self.subpart] = new_value
@@ -270,11 +273,14 @@ class RewriteBatchCreate(CalcRewriteRule):
             return sample_batch
 
         new_value = self._evaluate(locals_)
+        if new_value is None:
+            self.logger.debug("not creating %r value due to None result",
+                              self.subpart)
 
         new_samples = dict(samples)
         new_samples[self.subpart] = new_value
 
-        self.logger.debug("created %r value (%r -> %r)",
+        self.logger.debug("created %r value (%r)",
                           self.subpart,
                           new_value)
 
