@@ -336,7 +336,8 @@ class StreamSubmitterService(SubmitterServiceMixin,
     def _handle_compressor_task_done(self, task):
         if (task.cancelled() or
                 isinstance(task.exception(), asyncio.CancelledError)):
-            pass
+            return
+
         self.logger.error("compressor task (%r) exited prematurely, "
                           "trying to re-start it", task)
 
