@@ -347,7 +347,7 @@ class StreamSubmitterService(SubmitterServiceMixin,
         self._front_queue.put_nowait(block)
 
     def _drop_item(self, item):
-        _, _, _, _, _, handle = item
+        _, _, _, _, _, _, handle = item
         handle.close()
 
     def _preprocess_item(self, item):
