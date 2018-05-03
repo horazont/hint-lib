@@ -202,6 +202,9 @@ class CalcRewriteRule(metaclass=abc.ABCMeta):
             locals_[key] = value
 
     def _check_precondition(self, locals_):
+        if self.precondition is None:
+            return True
+
         try:
             precondition_result = eval(self.precondition,
                                        self.globals_,
