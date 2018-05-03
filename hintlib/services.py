@@ -351,7 +351,7 @@ class StreamSubmitterService(SubmitterServiceMixin,
         handle.close()
 
     def _preprocess_item(self, item):
-        path, t0, seq0, period, data, handle = item
+        path, t0, seq0, period, data, range_, handle = item
 
         bin_data = array.array("h", data).tobytes()
         ct0 = time.monotonic()
@@ -363,7 +363,7 @@ class StreamSubmitterService(SubmitterServiceMixin,
                               (ct1-ct0) /
                               (period*len(data)).total_seconds()
                           ) * 100)
-        return path, t0, seq0, period, bz2_data, handle
+        return path, t0, seq0, period, bz2_data, range_, handle
 
     async def _compressor_task(self):
         loop = asyncio.get_event_loop()
@@ -387,7 +387,7 @@ class StreamSubmitterService(SubmitterServiceMixin,
             self._enqueue_dropping_old(processed_item)
 
     def _compose_iq_payload(self, item):
-        path, t0, seq0, period, bz2_data, handle = item
+        path, t0, seq0, period, bz2_data, range_, handle = item
         payload = hintlib.xso.Query()
         payload.stream = hintlib.xso.Stream()
         payload.stream.path = str(path)
@@ -396,9 +396,7 @@ class StreamSubmitterService(SubmitterServiceMixin,
         payload.stream.sample_type = "h"
         payload.stream.data = bz2_data
         payload.stream.seq0 = seq0
-        payload.stream.range_ = self._stream_ranges.get(
-            (path.part, path.subpart), 1
-        )
+        payload.stream.range_ = range_
         return payload
 
     async def _submit_single(self, dest, item):
