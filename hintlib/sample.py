@@ -9,6 +9,7 @@ class Part(Enum):
     BME280 = 'bme280'  # environmental sensor
     TCS3200 = 'tcs3200'  # light sensor
     LSM303D = 'lsm303d'  # accelerometer + compass
+    ESP8266_TX = 'esp8266-tx'
 
 
 class BME280Subpart(Enum):
@@ -31,6 +32,17 @@ class LSM303DSubpart(Enum):
     COMPASS_X = 'compass-x'
     COMPASS_Y = 'compass-y'
     COMPASS_Z = 'compass-z'
+
+
+class ESP8266TXSubpart(Enum):
+    SENT = 'sent'
+    DROPPED = 'dropped'
+    OOM_DROPPED = 'oom-dropped'
+    ERROR = 'error'
+    RETRANSMITTED = 'retransmitted'
+    BROADCASTS = 'broadcasts'
+    QUEUE_OVERRUN = 'queue-overrun'
+    ACKLOCKS_NEEDED = 'acklocks-needed'
 
 
 class CustomNoiseSubpart(Enum):
