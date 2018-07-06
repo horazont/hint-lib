@@ -245,7 +245,7 @@ class SubmitterServiceMixin(metaclass=abc.ABCMeta):
         try:
             self._queue.put_nowait(item)
         except asyncio.QueueFull:
-            to_drop = self._queue.get_nowait(item)
+            to_drop = self._queue.get_nowait()
             self.logger.warning("queue full, dropping %r", to_drop)
             self._drop_item(to_drop)
             self._queue.put_nowait(item)
