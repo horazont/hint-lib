@@ -13,6 +13,10 @@ HI_C8 = 7.2546e-4
 HI_C9 = -3.582e-6
 
 
+DP_K2 = 17.62
+DP_K3 = 243.12
+
+
 PRESSURE_R_STAR = 287.05
 KELVIN_OFFSET = 273.15
 PRESSURE_C = 0.12
@@ -57,11 +61,27 @@ def height_correct_pressure(
     )
 
 
+def rh_temp_to_dewpoint(relative_humidity, temperature):
+    if relative_humidity == 0.0:
+        # this is probably not the actual limit of this function, but it’s
+        # close enough
+        return -KELVIN_OFFSET
+
+    ln_h = math.log(relative_humidity)
+
+    return DP_K3 * (
+        DP_K2 * temperature / (DP_K3 + temperature) + ln_h
+    ) / (
+        DP_K2 * DP_K3 / (DP_K3 + temperature) - ln_h
+    )
+
+
 CALC_REWRITE_GLOBALS = {
     "exp": math.exp,
     "to_decibels_safe": to_decibels_safe,
     "heat_index": heat_index,
     "height_correct_pressure": height_correct_pressure,
+    "rh_temp_to_dewpoint": rh_temp_to_dewpoint,
 }
 
 
