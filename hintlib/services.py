@@ -1,6 +1,7 @@
 import abc
 import array
 import asyncio
+import logging
 import bz2
 import time
 
@@ -9,6 +10,64 @@ from datetime import timedelta
 import aioxmpp
 
 import hintlib.xso
+import hintlib.utils
+
+
+class RestartingTask:
+    def __init__(self, coroutine_function,
+                 logger=None,
+                 loop=None):
+        super().__init__()
+        self._func = coroutine_function
+        self._task = None
+        self._should_run = False
+        self.backoff = hintlib.utils.ExponentialBackOff()
+        self._loop = loop or asyncio.get_event_loop()
+        self._logger = logger or logging.getLogger(
+            ".".join([__name__, type(self).__qualname__, str(id(self))]),
+        )
+
+    def start(self):
+        self._should_run = True
+        self.backoff.reset()
+        self._ensure_state()
+
+    def stop(self):
+        self._should_run = False
+        self._ensure_state()
+
+    def _task_done(self, task):
+        assert task is self._task
+        try:
+            try:
+                result = task.result()
+            except asyncio.CancelledError:
+                self._logger.debug("task stopped after cancellation request")
+                if self._should_run:
+                    self._logger.info("restarting task immediately because"
+                                      " the desired state is up")
+                    self._loop.call_soon(self._ensure_state)
+            except BaseException as exc:
+                delay = next(self.backoff)
+                self._logger.error("task crashed! retrying in %s",
+                                   delay, exc_info=True)
+                self._loop.call_later(delay, self._ensure_state)
+                return
+
+            self._logger.info("task exited with result %r, not restarting",
+                              result)
+            self._should_run = False
+        finally:
+            self._task = None
+
+    def _ensure_state(self):
+        if self._task is None and self._should_run:
+            # need to start task
+            self._task = self._loop.create_task(self._func())
+            self._task.add_done_callback(self._task_done)
+        elif self._task is not None and not self._should_run:
+            # need to stop task
+            self._task.cancel()
 
 
 class Buddies(aioxmpp.service.Service):

@@ -116,3 +116,31 @@ def compose_dt(t_s, t_us):
         microsecond=t_us
     )
 
+
+class ExponentialBackOff:
+    def __init__(self, base=2, start=1, max_=120):
+        super().__init__()
+        self.start = start
+        self.max_ = max_
+        self.base = base
+        self._is_failing = False
+        self._current = self.start
+
+    def __iter__(self):
+        return self
+
+    def __next__(self):
+        self._is_failing = True
+        val = self._current
+        self._current *= min(self.base, self.max_)
+        return val
+
+    def next(self):
+        return next(self)
+
+    def reset(self):
+        self._current = self.start
+
+    @property
+    def failing(self):
+        return self._is_failing
