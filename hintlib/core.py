@@ -7,11 +7,27 @@ class BotCore:
     def __init__(self, xmpp_config, client_logger=None):
         super().__init__()
         self.__config = xmpp_config
+
+        override_peer = []
+        if xmpp_config.get("host"):
+            override_peer.append(
+                (xmpp_config["host"],
+                 xmpp_config.get("port", 5222),
+                 aioxmpp.connector.STARTTLSConnector())
+            )
+
+        security_args = {}
+        if xmpp_config.get("public_key_pin"):
+            security_args["pin_store"] = xmpp_config["public_key_pin"]
+            security_args["pin_type"] = aioxmpp.security_layer.PinType.PUBLIC_KEY
+
         self.client = aioxmpp.Client(
             aioxmpp.JID.fromstr(xmpp_config["jid"]),
             aioxmpp.make_security_layer(
-                xmpp_config["password"]
+                xmpp_config["password"],
+                **security_args,
             ),
+            override_peer=override_peer,
             logger=client_logger,
         )
 

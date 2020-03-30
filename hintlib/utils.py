@@ -1,5 +1,6 @@
 import calendar
 import contextlib
+import importlib
 import os
 import pathlib
 import tempfile
@@ -117,6 +118,14 @@ def compose_dt(t_s, t_us):
     )
 
 
+def kelvin_to_celsius(T):
+    return T - 273.15
+
+
+def celsius_to_kelvin(T):
+    return T - kelvin_to_celsius(0)
+
+
 class ExponentialBackOff:
     def __init__(self, base=2, start=1, max_=120):
         super().__init__()
@@ -144,3 +153,29 @@ class ExponentialBackOff:
     @property
     def failing(self):
         return self._is_failing
+
+
+def get_class_by_path(path, *, logger=None):
+    logger = logger or logging.getLogger("__name__")
+
+    module_name, class_ = path.rsplit(".", 1)
+    try:
+        module = importlib.import_module(module_name)
+    except ImportError:
+        logger.error("failed to import plugin module %r",
+                     module_name,
+                     exc_info=True)
+        raise ValueError("invalid class: {!r}".format(path))
+
+    try:
+        class_ = getattr(module, class_)
+    except AttributeError:
+        logger.error(
+            "failed to find class %r in plugin module %r",
+            class_,
+            module_name,
+            exc_info=True,
+        )
+        raise ValueError("invalid class: {!r}".format(path))
+
+    return class_

@@ -266,5 +266,5 @@ class AdvancedHTTPRequester(AdvancedRequester):
     async def _perform_request(self, expired_cache_entry=None, **kwargs):
         async with self._session() as session:
             return (await self._perform_http_request(
-                session, expired_cache_entry, **kwargs
+                session, expired_cache_entry=expired_cache_entry, **kwargs
             ))

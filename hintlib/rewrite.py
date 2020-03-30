@@ -1,6 +1,8 @@
 import abc
 import math
 
+from . import sample
+
 
 HI_C1 = -8.784695
 HI_C2 = 1.61139411
@@ -169,7 +171,7 @@ class IndividualSampleRewriter:
 
         return rewrite_builder(rule, logger)
 
-    def rewrite(self, sample_obj):
+    def rewrite(self, sample_obj: sample.Sample):
         for rule in self._rewrite_rules:
             sample_obj = rule(sample_obj)
         return sample_obj
@@ -257,7 +259,7 @@ class CalcRewriteRule(metaclass=abc.ABCMeta):
 
 
 class RewriteBatchValue(CalcRewriteRule):
-    def __call__(self, sample_batch):
+    def __call__(self, sample_batch: sample.SampleBatch) -> sample.SampleBatch:
         ts, bare_path, samples = sample_batch
 
         if not self._match(sample_batch):
@@ -281,11 +283,11 @@ class RewriteBatchValue(CalcRewriteRule):
                           samples.get(self.subpart),
                           new_value)
 
-        return ts, bare_path, new_samples
+        return sample.SampleBatch(ts, bare_path, new_samples)
 
 
 class RewriteBatchCreate(CalcRewriteRule):
-    def __call__(self, sample_batch):
+    def __call__(self, sample_batch: sample.SampleBatch) -> sample.SampleBatch:
         ts, bare_path, samples = sample_batch
 
         if not self._match(sample_batch):
@@ -308,7 +310,7 @@ class RewriteBatchCreate(CalcRewriteRule):
                           self.subpart,
                           new_value)
 
-        return ts, bare_path, new_samples
+        return sample.SampleBatch(ts, bare_path, new_samples)
 
 
 class SampleBatchRewriter:

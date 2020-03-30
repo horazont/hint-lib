@@ -100,6 +100,110 @@ class Buddies(aioxmpp.service.Service):
             roster.subscribe(jid)
 
 
+class PeerLockService(aioxmpp.service.Service):
+    ORDER_AFTER = [aioxmpp.PresenceClient]
+
+    class PeerHandle:
+        on_locked = aioxmpp.callbacks.Signal()
+        on_unlocked = aioxmpp.callbacks.Signal()
+
+        def __init__(self):
+            self.lock_event = asyncio.Event()
+            self.full_jid = None
+
+        def _unlock(self):
+            if self.full_jid is not None:
+                self.on_unlocked()
+
+            self.lock_event.clear()
+            self.full_jid = None
+
+        def _lock(self, full_jid):
+            old_jid = self.full_jid
+            self.full_jid = full_jid
+            if old_jid != full_jid:
+                self.on_locked(full_jid)
+            self.lock_event.set()
+
+    def __init__(self, client, **kwargs):
+        super().__init__(client, **kwargs)
+        self._state = {}
+
+    @aioxmpp.service.depsignal(aioxmpp.Client, "on_stream_destroyed")
+    def _on_stream_destroyed(self, reason):
+        for handle in self._state.values():
+            handle.unlock()
+
+    @aioxmpp.service.depsignal(aioxmpp.PresenceClient, "on_available")
+    def _on_available(self, full_jid, stanza):
+        try:
+            handle = self._state[stanza.from_.bare()]
+        except KeyError:
+            return
+
+        self.logger.info("locked to JID %s", full_jid)
+        handle._lock(full_jid)
+
+    @aioxmpp.service.depsignal(aioxmpp.PresenceClient, "on_unavailable")
+    def _on_unavailable(self, full_jid, stanza):
+        try:
+            handle = self._state[stanza.from_.bare()]
+        except KeyError:
+            return
+
+        self.logger.info("locked-to JID %s is offline, trying to lock to "
+                         "another one", full_jid)
+
+        resources = self.__presence.get_peer_resources(self.peer_jid).copy()
+        resources.pop(stanza.from_.resource, None)
+        if not resources:
+            self.logger.debug("no more resources to lock to")
+            handle._unlock()
+            return
+
+        # pick a "random" one
+        next_resource = next(iter(resources.keys()))
+        full_jid = full_jid.replace(resource=next_resource)
+        self.logger.info("locked to %s in response to unavailable presence",
+                         full_jid)
+
+        handle._lock(full_jid)
+
+    @aioxmpp.service.depsignal(aioxmpp.PresenceClient, "on_bare_unavailable")
+    def _on_bare_unavailable(self, stanza):
+        try:
+            handle = self._state[stanza.from_.bare()]
+        except KeyError:
+            return
+
+        self.logger.info("%s went offline, unlocking", stanza.from_.bare())
+        handle._unlock()
+
+    def register_peer(self, peer_jid):
+        if peer_jid.resource:
+            raise ValueError("peer address must not be a full JID")
+
+        try:
+            return self._state[peer_jid]
+        except KeyError:
+            pass
+
+        handle = self.PeerHandle()
+        self._state[peer_jid] = handle
+        try:
+            resource = next(iter(
+                self.dependencies[aioxmpp.PresenceClient].get_peer_resources(
+                    peer_jid
+                )
+            ))
+        except StopIteration:
+            pass
+        else:
+            handle._lock(peer_jid.replace(resource=resource))
+        return handle
+
+
+
 class SenderService(aioxmpp.service.Service):
     ORDER_AFTER = [aioxmpp.PresenceClient]
 

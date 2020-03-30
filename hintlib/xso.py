@@ -1,4 +1,6 @@
+import aioxmpp
 import aioxmpp.xso
+import aioxmpp.pubsub.xso
 
 from aioxmpp.utils import namespaces
 
@@ -88,3 +90,6 @@ class Query(aioxmpp.xso.XSO):
     sample_batches = aioxmpp.xso.Child([SampleBatches])
 
     stream = aioxmpp.xso.Child([Stream])
+
+
+aioxmpp.pubsub.xso.as_payload_class(SampleBatch)
