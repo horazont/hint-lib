@@ -36,6 +36,16 @@ class RestartingTask:
         self._should_run = False
         self._ensure_state()
 
+    def restart(self):
+        if not self._should_run:
+            return self.start()
+        self.backoff.reset()
+        if self._task is None:
+            self._ensure_state()
+        else:
+            # cancel the task in order to force an immediate restart
+            self._task.cancel()
+
     def _task_done(self, task):
         assert task is self._task
         try:
