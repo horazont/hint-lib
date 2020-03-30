@@ -57,6 +57,7 @@ class RestartingTask:
                     self._logger.info("restarting task immediately because"
                                       " the desired state is up")
                     self._loop.call_soon(self._ensure_state)
+                return
             except BaseException as exc:
                 delay = next(self.backoff)
                 self._logger.error("task crashed! retrying in %s",
