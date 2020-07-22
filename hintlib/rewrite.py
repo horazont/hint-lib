@@ -92,6 +92,7 @@ CALC_REWRITE_GLOBALS = {
     "heat_index": heat_index,
     "height_correct_pressure": height_correct_pressure,
     "rh_temp_to_dewpoint": rh_temp_to_dewpoint,
+    "wet_bulb_temperature": wet_bulb_temperature,
 }
 
 
