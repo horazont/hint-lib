@@ -78,6 +78,14 @@ def rh_temp_to_dewpoint(relative_humidity, temperature):
     )
 
 
+def wet_bulb_temperature(relative_humidity, temperature):
+    return temperature * math.atan(
+      0.151977 * (relative_humidity + 8.313659)**(1/2)
+    ) + math.atan(temperature + relative_humidity) - math.atan(
+      relative_humidity - 1.676331
+    ) + 0.00391838 * (relative_humidity)**(3/2) * math.atan(0.023101 * relative_humidity) - 4.686035
+
+
 CALC_REWRITE_GLOBALS = {
     "exp": math.exp,
     "to_decibels_safe": to_decibels_safe,
