@@ -141,7 +141,7 @@ class ExponentialBackOff:
     def __next__(self):
         self._is_failing = True
         val = self._current
-        self._current *= min(self.base, self.max_)
+        self._current = min(self._current * self.base, self.max_)
         return val
 
     def next(self):
