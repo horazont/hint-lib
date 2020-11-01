@@ -30,8 +30,13 @@ class SampleBatch(aioxmpp.xso.XSO):
         type_=aioxmpp.xso.DateTime(),
     )
 
-    bare_path = aioxmpp.xso.Attr(
-        "path"
+    part = aioxmpp.xso.Attr(
+        "part"
+    )
+
+    instance = aioxmpp.xso.Attr(
+        "instance",
+        default=None,
     )
 
     samples = aioxmpp.xso.ChildList([NumericSample])
@@ -50,8 +55,22 @@ class SampleBatches(aioxmpp.xso.XSO):
 class Stream(aioxmpp.xso.XSO):
     TAG = namespaces.hint_sensor, "stream"
 
-    path = aioxmpp.xso.Attr(
-        "path"
+    module = aioxmpp.xso.Attr(
+        "module"
+    )
+
+    part = aioxmpp.xso.Attr(
+        "part"
+    )
+
+    instance = aioxmpp.xso.Attr(
+        "instance",
+        default=None,
+    )
+
+    subpart = aioxmpp.xso.Attr(
+        "subpart",
+        default=None,
     )
 
     t0 = aioxmpp.xso.Attr(
