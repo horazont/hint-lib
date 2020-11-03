@@ -36,6 +36,15 @@ class RestartingTask:
         self._should_run = False
         self._ensure_state()
 
+    async def wait_for_termination(self):
+        self.stop()
+        if self._task is None:
+            return
+        try:
+            await self._task
+        except Exception as exc:
+            pass
+
     def restart(self):
         if not self._should_run:
             return self.start()
