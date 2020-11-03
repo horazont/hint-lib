@@ -1,7 +1,10 @@
+import array
+import bz2
 import collections
+import dataclasses
 import typing
 
-from datetime import datetime
+from datetime import datetime, timedelta
 from enum import Enum
 
 
@@ -110,15 +113,16 @@ PART_SUBPARTS = {
 
 
 class SensorPath(typing.NamedTuple):
+    module: str
     part: Part
-    instance: typing.Union[int, str]
+    instance: str
     subpart: typing.Optional[str] = None
 
     def replace(self, *args, **kwargs):
         return self._replace(*args, **kwargs)
 
     def __str__(self):
-        parts = [self.instance]
+        parts = [self.module, self.instance]
         if isinstance(self.part, str):
             parts.insert(0, self.part)
         else:
@@ -156,3 +160,71 @@ class SampleBatch(typing.NamedTuple):
 
     def replace(self, *args, **kwargs):
         return self._replace(*args, **kwargs)
+
+    def expand(self) -> typing.Iterable[Sample]:
+        for subpart, value in self.samples.items():
+            yield Sample(timestamp=self.timestamp,
+                         path=self.bare_path.replace(subpart=subpart),
+                         value=value)
+
+
+class EncodedStreamData(typing.NamedTuple):
+    data: bytes
+    sample_type: str
+    compressed: bool
+
+    def decompress(self) -> "EncodedStreamData":
+        if not self.compressed:
+            return self
+        return self._replace(data=bz2.compress(self.data),
+                             compressed=True)
+
+    def decode(self) -> "DecodedStreamData":
+        decompressed = self.decompress()
+        data = array.array(decompressed.sample_type)
+        data.frombytes(decompressed.data)
+        return DecodedStreamData(
+            data=data,
+        )
+
+    def encode(self, compress: bool) -> "EncodedStreamData":
+        if compress and not self.compressed:
+            return self.compress()
+        return self
+
+    def compress(self) -> "EncodedStreamData":
+        if self.compressed:
+            return self
+        return self._replace(data=bz2.decompress(self.data),
+                             compressed=True)
+
+
+class DecodedStreamData(typing.NamedTuple):
+    data: array.array
+
+    def decode(self) -> "DecodedStreamData":
+        return self
+
+    def encode(self, compress: bool) -> "EncodedStreamData":
+        return EncodedStreamData(
+            data=self.data.tobytes(),
+            sample_type=self.data.typecode,
+        ).encode(compress=compress)
+
+
+@dataclasses.dataclass
+class StreamBlock:
+    timestamp: datetime
+    path: SensorPath
+    seq0: int
+    period: timedelta
+    range_: float
+    data: typing.Union[DecodedStreamData, EncodedStreamData]
+
+    def get_data(self) -> array.array:
+        self._data = self._data.decode()
+        return self._data.data
+
+    def get_encoded_data(self, compress: bool) -> EncodedStreamData:
+        self._data = self._data.encode(compress=compress)
+        return self._data
