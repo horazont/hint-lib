@@ -4,6 +4,7 @@ import asyncio
 import logging
 import bz2
 import time
+import typing
 
 from datetime import timedelta
 
@@ -96,6 +97,15 @@ class Buddies(aioxmpp.service.Service):
     def __init__(self, client, **kwargs):
         super().__init__(client, **kwargs)
         self.__buddies = []
+
+    @property
+    def buddies(self):
+        return self.__buddies
+
+    def set_buddies(self, buddies: typing.Mapping[
+            aioxmpp.JID,
+            typing.Set]):
+        self._buddies = list(buddies)
 
     def load_buddies(self, buddies_cfg):
         self.__buddies = []
@@ -221,7 +231,6 @@ class PeerLockService(aioxmpp.service.Service):
         else:
             handle._lock(peer_jid.replace(resource=resource))
         return handle
-
 
 
 class SenderService(aioxmpp.service.Service):
