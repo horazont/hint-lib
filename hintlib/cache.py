@@ -197,7 +197,7 @@ class AdvancedRequester(metaclass=abc.ABCMeta):
                 else:
                     context = err.__context__
                     subcontext = context.__context__ \
-                        if hasattr(context.__context__) else None
+                        if hasattr(context, "__context__") else None
                     raise context from subcontext
 
             self.logger.debug("ignoring failed request (%s) and returning "
