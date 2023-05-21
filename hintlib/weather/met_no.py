@@ -149,15 +149,17 @@ def process_interval(parent, start, end):
 
 
 class Requester(hintlib.cache.AdvancedHTTPRequester):
-    URL = "http://api.met.no/weatherapi/locationforecast/1.9/"
+    URL = "https://api.met.no/weatherapi/locationforecast/2.0/classic"
 
     def __init__(self,
                  mock_data=None,
+                 altitude=None,
                  dump=None, **kwargs):
         super().__init__(**kwargs)
         self.max_cache_over_expiry = timedelta(minutes=45)
         self.mock_data = mock_data
         self.dump = dump
+        self.altitude = altitude
 
     def _is_too_stale(self, cache_entry):
         age = datetime.utcnow() - cache_entry.expires
@@ -231,11 +233,16 @@ class Requester(hintlib.cache.AdvancedHTTPRequester):
                 )
 
         response = None
+        params = {
+            "lat": str(lat),
+            "lon": str(lon),
+        }
+        if self.altitude:
+            params["altitude"] = str(self.altitude)
         try:
             async with session.get(
                     self.URL,
-                    params={"lat": str(lat),
-                            "lon": str(lon)},
+                    params=params,
                     headers=headers) as response:
                 self.logger.debug(
                     "response: '%d: %s' (headers=%r)",
@@ -261,7 +268,7 @@ class Requester(hintlib.cache.AdvancedHTTPRequester):
                 last_modified = response.headers.get("Last-Modified")
                 data = await response.read()
 
-        except aiohttp.errors.ClientResponseError:
+        except aiohttp.ClientResponseError:
             if response.status == 304:
                 # some problem with aiohttp?
                 return expired_cache_entry
@@ -307,7 +314,8 @@ class Service:
 
         self.requester = Requester(
             mock_data=mock_data,
-            dump=config.get("dump")
+            dump=config.get("dump"),
+            altitude=config.get("altitude"),
         )
 
     async def get_data(self, lat, lon):
